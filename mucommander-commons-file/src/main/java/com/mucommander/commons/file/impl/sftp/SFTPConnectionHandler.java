@@ -19,6 +19,7 @@
 
 package com.mucommander.commons.file.impl.sftp;
 
+import java.io.File;
 import java.io.IOException;
 
 import org.slf4j.Logger;
@@ -40,6 +41,8 @@ import com.mucommander.commons.file.connection.ConnectionHandler;
  */
 class SFTPConnectionHandler extends ConnectionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(SFTPConnectionHandler.class);
+
+    private static final String DEFAULT_IDENTITY_FILE = System.getProperty("user.home")+"/.ssh/id_rsa";
 
     Session session;
     ChannelSftp channelSftp;
@@ -83,6 +86,16 @@ class SFTPConnectionHandler extends ConnectionHandler {
             if (privateKeyPath != null) {
                 LOGGER.info("Using {} authentication method", PUBLIC_KEY_AUTH_METHOD);
                 jsch.addIdentity(privateKeyPath);
+            }
+
+            if (new File(DEFAULT_IDENTITY_FILE).exists()) {
+                try {
+                    jsch.addIdentity(DEFAULT_IDENTITY_FILE);
+                    LOGGER.info("Using {} authentication method", PUBLIC_KEY_AUTH_METHOD);
+                }
+                catch (JSchException e) {
+                    LOGGER.debug("Unable to load key {}", DEFAULT_IDENTITY_FILE);
+                }
             }
 
             session = jsch.getSession(credentials.getLogin(), realm.getHost(), port);
